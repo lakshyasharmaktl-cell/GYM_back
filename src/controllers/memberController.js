@@ -52,6 +52,7 @@ export const addMember = async (req, res) => {
 
     res.status(201).json(member);
   } catch (error) {
+    console.error("❌ addMember error:", error.message, error.stack);
     res.status(500).json({ message: error.message });
   }
 };
