@@ -57,3 +57,25 @@ export const getAllPayments = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc Delete a payment and reverse the member's amountPaid
+export const deletePayment = async (req, res) => {
+  try {
+    const payment = await Payment.findById(req.params.paymentId);
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    // Reverse the payment on the member record
+    const member = await Member.findById(payment.member);
+    if (member) {
+      member.membership.amountPaid = Math.max(0, member.membership.amountPaid - payment.amount);
+      member.membership.dueAmount = Math.max(0, member.membership.totalFee - member.membership.amountPaid);
+      member.membership.status = member.membership.dueAmount > 0 ? "Pending" : "Active";
+      await member.save();
+    }
+
+    await payment.deleteOne();
+    res.json({ message: "Payment deleted and member dues updated" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
